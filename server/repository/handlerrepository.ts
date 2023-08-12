@@ -12,6 +12,7 @@ const toGameModel = (prismaRoom: game): RoomModel => ({
       y: z.number(),
     })
     .parse(prismaRoom.position),
+  // isFiring: false,
 });
 
 export const handlerrepository = {

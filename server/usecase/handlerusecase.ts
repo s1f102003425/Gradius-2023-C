@@ -7,6 +7,7 @@ export const handlerusecase = {
     const newRoom: RoomModel = {
       Id: userId,
       position: { x: 0, y: 0 },
+      // isFiring: false,
     };
     await handlerrepository.save(newRoom);
     console.log('newgame');
@@ -16,6 +17,7 @@ export const handlerusecase = {
     const label = userId;
     console.log(position);
     console.log(userId);
+    console.log(label);
     const latest = await handlerrepository.findLatest(label);
     assert(latest);
     console.log(latest);

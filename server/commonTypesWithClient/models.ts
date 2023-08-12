@@ -17,4 +17,5 @@ export type TaskModel = {
 export type RoomModel = {
   Id: string;
   position: { x: number; y: number };
+  // isFiring: boolean;
 };

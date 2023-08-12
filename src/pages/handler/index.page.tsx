@@ -26,7 +26,10 @@ const Home = () => {
     console.log(e);
   };
   // const shotClick = async (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-  //   await apiClient;
+  //   const game =await apiClient.shot.$post({
+  //     body:{position:layerPosition,key}
+  //   })
+
   //   console.log(e);
   // };
   // useEffect(() => {
