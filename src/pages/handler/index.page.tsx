@@ -5,6 +5,8 @@ import styles from './index.module.css';
 
 const Home = () => {
   const hoge = true;
+  const [isFiring, setIsFiring] = useState(false);
+  const [layerPosition, setLayerPosition] = useState({ x: 0, y: 0 });
 
   // const keydown = async (e: React.KeyboardEvent<HTMLDivElement>) => {
   //   e.preventDefault();
@@ -19,19 +21,46 @@ const Home = () => {
     });
     setLayerPosition(game.position);
   };
-  const click = async (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const createClick = async (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     await apiClient.create.$post();
     console.log(e);
   };
-  const [layerPosition, setLayerPosition] = useState({ x: 0, y: 0 });
+  // const shotClick = async (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+  //   await apiClient;
+  //   console.log(e);
+  // };
+  // useEffect(() => {
+  //   const shotClick = (e: React.MouseEvent) => {
+  //     if (!isFiring) {
+  //       const shotInterval = setInterval(() => {
+  //         const fired = () => setIsFiring(true);
+  //         fired();
+  //         console.log(e);
+  //       }, 50);
+
+  //       setTimeout(() => {
+  //         clearInterval(shotInterval);
+  //         setIsFiring(false);
+  //       }, 1000);
+  //     }
+  //   };
+  // }, [shotClick]);
+  const shotMouseDown = () => {
+    setIsFiring(true);
+  };
+  const shotMouseUp = () => {
+    setIsFiring(false);
+  };
+
+  console.log(`x:${layerPosition.x},y:${layerPosition.y}`);
   if (!hoge) return <Loading visible />;
-  console.log(`x:${layerPosition.x}y:${layerPosition.y}`);
 
   return (
     <>
       <div className={styles['debug-board']}>
         <div className={styles['debug-value']}>X:{layerPosition.x}</div>
         <div className={styles['debug-value']}>Y:{layerPosition.y}</div>
+        <div className={styles['debug-value']}>isFiring:{isFiring ? '〇' : '×'}</div>
       </div>
       <div className={styles['handler-board']}>
         <button className={styles['minus-y']} onClick={() => handleButtonClick('+Y')}>
@@ -47,8 +76,11 @@ const Home = () => {
           -Y
         </button>
       </div>
-      <div className={styles['create-button']} onClick={click}>
+      <div className={styles['create-button']} onClick={createClick}>
         create
+      </div>
+      <div className={styles.shot} onMouseDown={shotMouseDown} onMouseUp={shotMouseUp}>
+        shot
       </div>
     </>
   );

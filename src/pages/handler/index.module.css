@@ -8,7 +8,7 @@
 
 .debug-value {
   color: beige;
-  font-size: 30px;
+  font-size: 20px;
 }
 
 .handler-board {
@@ -84,6 +84,21 @@
 }
 
 .create-button:active {
+  border: inset 5px #f9f9f9;
+  background-color: #5c5a5a;
+}
+
+.shot {
+  width: 210px;
+  height: 50px;
+  text-align: center;
+  color: white;
+  background-color: black;
+  border: outset 5px #f9f9f9;
+  font-size: 30px;
+}
+
+.shot:active {
   border: inset 5px #f9f9f9;
   background-color: #5c5a5a;
 }
