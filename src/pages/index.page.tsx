@@ -1,25 +1,34 @@
-import { useAtom } from 'jotai';
 import Konva from 'konva';
-import { useEffect, useState } from 'react';
-import { Circle, Layer, Rect, Stage } from 'react-konva';
-import { userAtom } from 'src/atoms/user';
+import { useEffect, useRef, useState } from 'react';
+import { Circle, Image, Layer, Stage } from 'react-konva';
 import { Loading } from 'src/components/Loading/Loading';
-
+import styles from './index.module.css';
 const Home = () => {
   //黒い枠の中をクリックし、矢印ボタンを押すと、赤い点が動くよー
   const [playerX, setPlayerX] = useState(4);
   const [playerY, setPlayerY] = useState(0);
-  const [tamaX, settamaX] = useState(0);
-  const [tamaY, settamaY] = useState(2);
-  const [user] = useAtom(userAtom);
-  const [dx, setDx] = useState(-1); // x方向の移動量
-  const dx2 = 1;
-  const [dy, setDy] = useState(0); // y方向の移動量
+  const [dy, setDy] = useState(0);
+  const [bullet, setbullets] = useState<{ x: number; y: number }[]>([]);
+  const [isMovingLeft, setIsMovingLeft] = useState(false);
+  const [isMovingRight, setIsMovingRight] = useState(false);
+  const [isMovingUp, setIsMovingUp] = useState(false);
+  const [isMovingDown, setIsMovingDown] = useState(false);
+  const gradiusImg = useRef(new window.Image());
+  const [isGradiusLoaded, setIsGradiusLoaded] = useState(false);
+  const [backgroundX, setBackgroundX] = useState(0);
+  const [imageBack, setImageBack] = useState(new window.Image());
+  const [imageTama, setImageTama] = useState(new window.Image());
+  const [score, setScore] = useState(0);
+  const [playerLife, setPlayerLife] = useState(3);
+
   const [enemies, setEnemies] = useState<{ x: number; y: number }[]>([
     { x: 5, y: 2 },
     { x: 8, y: 4 },
   ]);
-  const [bullet, setbullets] = useState<{ x: number; y: number }[]>([]);
+  const enemyAnimation = useRef<Konva.Animation | null>(null);
+
+  const [dx, setDx] = useState(-1); // x方向の移動量
+  const dx2 = 1;
   const [board, setBoard] = useState([
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -33,20 +42,99 @@ const Home = () => {
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   ]);
   const hoge = true;
-  //キー入力
-  const keydown = async (e: React.KeyboardEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    // const game = await apiClient.?.$post({
-    //   body: { ? },
-    // });
-  };
+  useEffect(() => {
+    const animate = () => {
+      setBackgroundX((prevBackgroundX) => prevBackgroundX - 1); // 速度や方向を調整
 
-  //newgame作る
-  const click = async (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    // const newGame = await apiClient.create.$post();
-  };
+      // 次のフレームを要求
+      requestAnimationFrame(animate);
+    };
 
-  //スペースで弾出すよ(打て打つほど早くなっちゃう)
+    const animationFrame = requestAnimationFrame(animate);
+
+    return () => {
+      // コンポーネントがアンマウントされる際にアニメーションを停止
+      cancelAnimationFrame(animationFrame);
+    };
+  }, []);
+
+  useEffect(() => {
+    const image = new window.Image();
+    const image2 = new window.Image();
+    image.src = '/images/jett4.png';
+    image2.src = '/images/tama.png';
+    image.onload = () => {
+      setImageBack(image);
+      setImageTama(image2);
+    };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line complexity
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'ArrowUp') {
+        setIsMovingUp(true);
+      } else if (e.code === 'ArrowDown') {
+        setIsMovingDown(true);
+      } else if (e.code === 'ArrowLeft') {
+        setIsMovingLeft(true);
+      } else if (e.code === 'ArrowRight') {
+        setIsMovingRight(true);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'ArrowUp') {
+        setIsMovingUp(false);
+      } else if (e.code === 'ArrowDown') {
+        setIsMovingDown(false);
+      } else if (e.code === 'ArrowLeft') {
+        setIsMovingLeft(false);
+      } else if (e.code === 'ArrowRight') {
+        setIsMovingRight(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  useEffect(() => {
+    let animationFrameId: number | null = null;
+
+    const animate = () => {
+      if (isMovingLeft) {
+        setPlayerY((prevY) => Math.max(prevY - 0.05, 0));
+      }
+      if (isMovingRight) {
+        setPlayerY((prevY) => Math.min(prevY + 0.05, 7));
+      }
+      if (isMovingUp) {
+        setPlayerX((prevX) => Math.max(prevX - 0.05, 0));
+      }
+      if (isMovingDown) {
+        setPlayerX((prevX) => Math.min(prevX + 0.05, 7));
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [isMovingLeft, isMovingRight, isMovingUp, isMovingDown]);
+
+  const tamaAnimation = useRef<Konva.Animation | null>(null);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
@@ -54,134 +142,180 @@ const Home = () => {
           x: playerY,
           y: playerX,
         };
-        setbullets((prevbullets) => [...prevbullets, newBullets]);
-        console.log(bullet);
-        console.log(enemies);
-        console.log(enemies.length);
-        const tamaAnimation = new Konva.Animation((tama) => {
-          setbullets((prevBullets) => {
-            if (tama === undefined) {
-              console.log('error');
-              return prevBullets;
-            } else {
-              const speed = 2;
-              const dist = speed * (tama.timeDiff / 1000);
-              const newbullet = prevBullets.map((bullet) => ({
-                ...bullet,
-                x: bullet.x + dx2 * dist,
-                y: bullet.y,
-              }));
-              return newbullet.filter((bullet) => bullet.x <= 18);
+        setbullets((prevBullets) => [...prevBullets, newBullets]);
+
+        if (tamaAnimation.current === null) {
+          tamaAnimation.current = new Konva.Animation((anim) => {
+            if (anim !== undefined) {
+              setbullets((prevBullets) => {
+                const speed = 10; // 速度を適切な値に調整
+                const dist = speed * (anim.timeDiff / 1000);
+                const newBullets = prevBullets.map((bullet) => ({
+                  ...bullet,
+                  x: bullet.x + dist, // x座標にdistを足す
+                }));
+                return newBullets.filter((bullet) => bullet.x <= 30);
+              });
             }
           });
-        });
-        tamaAnimation.start();
+          tamaAnimation.current.start();
+        }
       }
     };
+
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dx2, dy]);
+  }, [playerX, playerY]);
 
-  const findnumber = (n: number) => {
-    let count = 0;
-    for (let y = 0; y < board.length; y++) {
-      for (let x = 0; x < board[y].length; x++) {
-        // eslint-disable-next-line max-depth
-        if (board[y][x] === n) {
-          count++;
-        }
-      }
-    }
-    return count;
-  };
+  // const findnumber = (n: number) => {
+  //   let count = 0;
+  //   for (let y = 0; y < board.length; y++) {
+  //     for (let x = 0; x < board[y].length; x++) {
+  //       // eslint-disable-next-line max-depth
+  //       if (board[y][x] === n) {
+  //         count++;
+  //       }
+  //     }
+  //   }
+  //   return count;
+  // };
   useEffect(() => {
-    const moveenemy = () => {
-      console.log('a');
-      if (enemies.length === 0) {
-        const addEnemy = () => {
-          const newEnemies = [
-            { x: 5, y: 2 },
-            { x: 8, y: 4 },
-          ];
-          setEnemies((prevEnemies) => [...prevEnemies, ...newEnemies]);
-        };
-        addEnemy();
-      }
-      if (enemies.length !== 0) {
-        console.log(enemies.length);
-        const enemyAnimation = new Konva.Animation((enemy) => {
-          setEnemies((prevenemy) => {
-            if (enemy === undefined) {
-              console.log('error');
-              return prevenemy;
-            } else {
-              const speed = 0.1;
-              const dist = speed * (enemy.timeDiff / 1000);
-              const newenemy = prevenemy.map((enemies) => ({
-                x: enemies.x + dx * dist,
-                y: enemies.y,
-              }));
-              console.log();
-              return newenemy.filter((enemy) => enemy.x >= 0);
+    if (enemyAnimation.current === null) {
+      enemyAnimation.current = new Konva.Animation((anim) => {
+        if (anim !== undefined) {
+          setEnemies((prevEnemies) => {
+            const speed = 5;
+            const dist = speed * (anim.timeDiff / 1000);
+            const newEnemies = prevEnemies.map((enemy) => ({
+              ...enemy,
+              x: enemy.x - dist,
+            }));
+            // 新しい敵を生成
+            if (Math.random() < 0.02) {
+              newEnemies.push({ x: 10, y: Math.random() * 7 });
             }
+
+            return newEnemies.filter((enemy) => enemy.x >= -30);
           });
+        }
+      });
+      enemyAnimation.current.start();
+    }
+  }, [enemies]);
+
+  const detectCollisions = () => {
+    setbullets((prevBullets) => {
+      const newBullets = prevBullets.filter((bullet) => {
+        const bulletHitbox = {
+          x: bullet.x * 100 + 50,
+          y: bullet.y * 100 + 50,
+          radius: 10,
+        };
+
+        let bulletHitEnemy = false;
+
+        const remainingEnemies = enemies.filter((enemy) => {
+          const enemyHitbox = {
+            x: enemy.x * 100,
+            y: enemy.y * 100 + 50,
+            radius: 20,
+          };
+
+          const distance = Math.sqrt(
+            Math.pow(bulletHitbox.x - enemyHitbox.x, 2) +
+              Math.pow(bulletHitbox.y - enemyHitbox.y, 2)
+          );
+
+          const collisionDetected = distance < bulletHitbox.radius + enemyHitbox.radius;
+
+          if (collisionDetected) {
+            bulletHitEnemy = true;
+            // eslint-disable-next-line max-nested-callbacks
+            setScore((prevScore) => prevScore + 0.5);
+            console.log(score);
+            return false; // 衝突した敵は残らない
+          }
+
+          return true;
         });
-        enemyAnimation.start();
+
+        if (bulletHitEnemy) {
+          setEnemies(remainingEnemies); // 衝突した場合、敵を更新
+          return null; // 弾も消滅
+        }
+
+        return bullet;
+      });
+
+      return newBullets.filter(Boolean);
+    });
+    const playerHitbox = {
+      x: playerY * 100, // プレイヤーの位置に合わせて調整
+      y: playerX * 100, // プレイヤーの位置に合わせて調整
+      radius: 10, // プレイヤーのサイズに合わせて調整
+    };
+
+    const remainingEnemies = enemies.filter((enemy) => {
+      const enemyHitbox = {
+        x: enemy.x * 100,
+        y: enemy.y * 100,
+        radius: 20,
+      };
+
+      const distance = Math.sqrt(
+        Math.pow(playerHitbox.x - enemyHitbox.x, 2) + Math.pow(playerHitbox.y - enemyHitbox.y, 2)
+      );
+
+      const collisionDetected = distance < playerHitbox.radius + enemyHitbox.radius;
+
+      if (collisionDetected) {
+        // プレイヤーと敵が衝突した場合、その敵を削除する
+        return false;
       }
-    };
-    moveenemy();
 
-    return () => {
-      moveenemy();
-    };
-  }, [dx, dy, enemies.length]);
+      return true;
+    });
 
+    if (remainingEnemies.length < enemies.length) {
+      setPlayerLife((prevLife) => prevLife - 1);
+      setEnemies(remainingEnemies);
+    }
+  };
+
+  // 上記の当たり判定関数を適切なタイミングで呼び出す
+  useEffect(() => {
+    detectCollisions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bullet, enemies]);
   if (!hoge) return <Loading visible />;
   return (
     <>
-      <div
-        className="container"
-        onKeyDown={keydown}
-        style={{ border: 'solid' }}
-        onClick={click}
-        tabIndex={0}
-      >
-        <div id="key">X:{playerX}</div>
-        <div id="key">Y:{playerY}</div>
-        <div id="key" />
+      {/* <img src={g.src} alt="images.png" /> */}
+      <div className={styles.lifeContainer}>
+        <p className={styles.life}>Life: {playerLife}</p>
       </div>
-      <Stage width={800} height={600}>
+      <div className={styles.scoreContainer}>
+        <p className={styles.score}>Score: {score}</p>
+      </div>
+      <Stage width={1200} height={800} className={styles.background}>
         <Layer>
-          {board.map((row, y) =>
-            row.map(
-              (color, x) =>
-                color !== 0 && (
-                  <Rect
-                    key={`${x}-${y}`}
-                    x={x * 100 + 70}
-                    y={y * 100}
-                    width={100}
-                    height={100}
-                    fill="black"
-                  />
-                )
-            )
-          )}
-          {enemies.map((enemy, index) => (
-            <Circle key={index} x={enemy.x * 100} y={enemy.y * 100 + 50} radius={20} fill="green" />
-          ))}
+          <Image image={imageBack} x={playerY * 100} y={playerX * 100} width={90} height={130} />
           {bullet.map((bullet, index) => (
-            <Circle
+            <Image
+              image={imageTama}
               key={index}
               x={bullet.x * 100 + 50}
               y={bullet.y * 100 + 50}
               radius={20}
-              fill="red"
+              scaleX={0.05}
+              scaleY={0.05}
             />
+          ))}
+          {enemies.map((enemy, index) => (
+            <Circle key={index} x={enemy.x * 100} y={enemy.y * 100 + 50} radius={20} fill="green" />
           ))}
         </Layer>
       </Stage>
